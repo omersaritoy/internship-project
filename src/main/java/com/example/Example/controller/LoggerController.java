@@ -27,6 +27,7 @@ public class LoggerController {
 
     @GetMapping("/getByIdAndEntityIdAndEntityType/{entitiyId}/{entityType}")
     public DataResult<Logger> getLogByIdAndEntityType(@PathVariable Long entitiyId, @PathVariable String entityType) {
+        // bunu farklı kullanıcı ekledi
         Logger log = loggerService.getLogByIdAndEntityType(entitiyId, entityType);
         return new DataResult<>(true, "Kayıt getirildi",log);
     }

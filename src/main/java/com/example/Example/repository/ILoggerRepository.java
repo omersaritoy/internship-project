@@ -26,7 +26,5 @@ public interface ILoggerRepository extends JpaRepository<Logger, Long> {
     @Query("select l from Logger l where l.action=:action")
     List<Logger> findByAction(@Param("action") String action);
 
-    @Query("SELECT l FROM Logger l WHERE (:entityType is null or l.entityType = :entityType) AND (:action IS NULL OR l.action = :action)")
-    List<Logger> findByEntityTypeAndAction(@Param("entityType") String entityType, @Param("action") String action);
 
 }

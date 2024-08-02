@@ -13,7 +13,7 @@ public interface IEmployeeService {
 
     DataResult<List<EmployeeDto>> getAllEmployees();
 
-    Result saveEmployee(EmployeeDto employee);
+    Result saveEmployee(EmployeeDto employee) throws Exception;
 
     Result updateEmployee(EmployeeDto employee, Long id);
 

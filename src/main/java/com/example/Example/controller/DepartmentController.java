@@ -1,7 +1,7 @@
 package com.example.Example.controller;
 
 import com.example.Example.Dtos.DepartmentDto;
-import com.example.Example.Dtos.EmployeeDto;
+
 import com.example.Example.Manager.DepartmentManager;
 import com.example.Example.utilities.DataResult;
 import com.example.Example.utilities.Result;

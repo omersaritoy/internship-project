@@ -5,8 +5,9 @@ import com.example.Example.annotations.Unique;
 import com.example.Example.annotations.UniqueType;
 import com.example.Example.entities.Department;
 import com.example.Example.entities.Employee;
+
+import com.example.Example.mernis.HWGKPSPublicSoap;
 import com.example.Example.repository.IDepartmentRepo;
-import com.example.Example.repository.ILoggerRepository;
 import com.example.Example.services.IEmployeeService;
 import com.example.Example.services.ILoggerService;
 import com.example.Example.utilities.*;
@@ -70,8 +71,13 @@ public class EmployeeManager implements IEmployeeService {
 
     @Override
     @Unique({UniqueType.Email, UniqueType.UserName})
-    public Result saveEmployee(EmployeeDto employeeDto) {
+    public Result saveEmployee(EmployeeDto employeeDto) throws Exception {
         Employee employee = null;
+
+        HWGKPSPublicSoap server=new HWGKPSPublicSoap();
+        boolean isReal= server.TCKimlikNoDogrula(Long.valueOf(employeeDto.getIdentityNumber()), employeeDto.getFirstName(), employeeDto.getLastName(), employeeDto.getBirthOfYear());
+        if(!isReal)
+            return new ErrorResult("Kimlik bilgileri Doğrulanamadı");
 
         Department department = departmentRepo.findById(employeeDto.getDepartmentId()).orElse(null);
         // Eğer department null ise veya silinmiş veya aktif değilse hata mesajı döndür
@@ -88,11 +94,10 @@ public class EmployeeManager implements IEmployeeService {
 
 
         employee = employeeRepo.save(emp);
-        loggerService.log("Create",emp.getName()+" çalışanı eklendi","Employee",employee.getId());
+        loggerService.log("Create", emp.getFirstName() + " " + emp.getLastName() + "çalışanı eklendi", "Employee", employee.getId());
         String verificationCode = verificationService.generateVerificationCode();
         redisTemplate.opsForValue().set("verificationCode:" + employee.getId(), verificationCode, 10, TimeUnit.MINUTES);
         emailSenderManager.sendMail(employee.getEmail(), employee.getUserName(), verificationCode);
-
 
 
         return new DataResult<>(true, "Employee Başarılı bir Şekilde Eklendi", employeeDto.convertToDto(employee));
@@ -112,23 +117,27 @@ public class EmployeeManager implements IEmployeeService {
     }
 
     @Override
-    @Unique({UniqueType.UserName, UniqueType.Email})
+    @Unique({UniqueType.EmailForUpdate,UniqueType.UserNameForUpdate})
     public Result updateEmployee(EmployeeDto employeeDto, Long id) {
         Employee employee = employeeRepo.findById(id).orElse(null);
-        employee.setName(employeeDto.getName());
+        employee.setFirstName(employeeDto.getFirstName());
+        employee.setLastName(employeeDto.getLastName());
+        employee.setBirthOfYear(employeeDto.getBirthOfYear());
         Department department = departmentRepo.findById(employeeDto.getDepartmentId()).orElse(null);
         if (department == null || department.getIsDeleted() || !department.getIsActive())
             return new Result("Lütfen geçerli bir departman giriniz");
 
         employee.setDepartment(department);
-        if (!employee.getUserName().equals(employeeDto.getUserName()))
+        if (!employee.getUserName().equals(employeeDto.getUserName())){
             employee.setUserName(employeeDto.getUserName());
+        }
+
 
         if (!employee.getEmail().equals(employeeDto.getEmail()))
             employee.setEmail(employeeDto.getEmail());
         employeeRepo.save(employee);
-        employeeDto.convertToDto(employee);
-        loggerService.log("update",employee.getName()+" çalışanı güncellendi","Employee",employee.getId());
+        employeeDto.converToDtoForUpdate(employee);
+        loggerService.log("update", employee.getFirstName() + " " + employee.getLastName() + " çalışanı güncellendi", "Employee", employee.getId());
 
         return new DataResult<>(true, "Employee Güncelendi", employeeDto);
     }
@@ -138,7 +147,7 @@ public class EmployeeManager implements IEmployeeService {
         Employee employee = employeeRepo.findById(id).orElse(null);
         employee.setIsDeleted(true);
         employeeRepo.save(employee);
-        loggerService.log("Delete",employee.getName()+" çalışanı silindi","Employee", employee.getId());
+        loggerService.log("Delete", employee.getFirstName() + " " + employee.getLastName() + " çalışanı silindi", "Employee", employee.getId());
 
         return new SuccessResult("Başarılı bir şekilde silindi");
     }

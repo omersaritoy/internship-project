@@ -27,4 +27,5 @@ public interface ILoggerRepository extends JpaRepository<Logger, Long> {
     List<Logger> findByAction(@Param("action") String action);
 
 
+
 }

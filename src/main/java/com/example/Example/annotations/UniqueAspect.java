@@ -3,6 +3,7 @@ package com.example.Example.annotations;
 
 import com.example.Example.Dtos.DepartmentDto;
 import com.example.Example.Dtos.EmployeeDto;
+import com.example.Example.Manager.EmployeeManager;
 import com.example.Example.entities.Department;
 import com.example.Example.entities.Employee;
 import com.example.Example.repository.IDepartmentRepo;
@@ -28,6 +29,8 @@ public class UniqueAspect {
     private IDepartmentRepo departmentRepo;
     @Autowired
     private IEmployeeRepo employeeRepo;
+    @Autowired
+    private EmployeeManager employeeManager;
 
     // @Around anotasyonu, belirli bir noktadan önce ve sonra işlemler yapabileceğimizi belirtir.
     // @annotation(Unique), @Unique anotasyonu ile işaretlenmiş metotların etrafında bu işlemi yapar.
@@ -45,10 +48,10 @@ public class UniqueAspect {
         }
 
         EmployeeDto employeeDto;
-        DepartmentDto dto ;
+        DepartmentDto dto;
         boolean isUnique = true;
         String errorMessage = "";
-
+        boolean fromUpdate = false;
         for (UniqueType type : unique.value()) {
             switch (type) {
                 case UserName:
@@ -58,9 +61,30 @@ public class UniqueAspect {
                         errorMessage = "User name must be unique";
                     }
                     break;
+                case UserNameForUpdate:
+                    employeeDto = (EmployeeDto) args[0];
+                    Employee employee = employeeRepo.findByUserName(employeeDto.getUserName());
+                    if (employee!=null&&employeeDto.getUserName().equals(employee.getUserName())) {
+                        break;
+                    } else if (!checkingUserName(employeeDto.getUserName())) {
+                        isUnique = false;
+                        errorMessage = "User name must be unique";
+                    }
+                    break;
+
                 case Email:
                     employeeDto = (EmployeeDto) args[0];
                     if (!checkingEmail(employeeDto.getEmail())) {
+                        isUnique = false;
+                        errorMessage = "Email must be unique";
+                    }
+                    break;
+                case EmailForUpdate:
+                    employeeDto = (EmployeeDto) args[0];
+                    Employee emp = employeeRepo.findByEmail(employeeDto.getEmail());
+                    if (emp != null && employeeDto.getEmail().equals(emp.getEmail())) {
+                        break;
+                    } else if (!checkingEmail(employeeDto.getEmail())) {
                         isUnique = false;
                         errorMessage = "Email must be unique";
                     }

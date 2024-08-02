@@ -36,7 +36,7 @@ public class EmployeeController {
         return employeeService.getEmployeeByUserName(userName);
     }
     @PostMapping("/create")
-    public Result createEmployee(@RequestBody EmployeeDto employee) {
+    public Result createEmployee(@RequestBody EmployeeDto employee) throws Exception {
         return employeeService.saveEmployee(employee);
     }
 

@@ -1,3 +1,4 @@
+
 package com.example.Example.Manager;
 
 import com.example.Example.Dtos.DepartmentDto;
@@ -33,7 +34,7 @@ public class DepartmentManager implements IDepartmentService {
 
     @Override
     @Unique(UniqueType.Code)
-    //@Unique-anatasyon yazılıcak öncelikle bir interface yaz sonra 
+    //@Unique-anatasyon yazılıcak öncelikle bir interface yaz sonra
     public DataResult<DepartmentDto> saveDepartment(DepartmentDto departmentDto) {
         Department dep = departmentRepo.save(getDto().convertToEntity(departmentDto));
         if (dep != null)
@@ -121,6 +122,3 @@ public class DepartmentManager implements IDepartmentService {
         return new SuccessDataResult<>(employeeCounts);
     }
 }
-
-
-

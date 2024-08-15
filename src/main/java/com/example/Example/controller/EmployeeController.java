@@ -49,7 +49,6 @@ public class EmployeeController {
     public Result deleteEmployee(@PathVariable Long id) {
         return employeeService.deleteEmployee(id);
     }
-
     @PutMapping("/verify/{id}")
     public Result verifyEmployee(@PathVariable Long id, @RequestParam String verificationCode) {
         return employeeService.verifyEmployee(id, verificationCode);

@@ -18,7 +18,8 @@ public class Employee {
     private Long id;
     private String firstName;
     private String lastName;
-    private String IdentityNumber;
+    @Column(name = "identity_number")
+    private String identityNumber;
     private Integer birthOfYear;
 
     private String userName;

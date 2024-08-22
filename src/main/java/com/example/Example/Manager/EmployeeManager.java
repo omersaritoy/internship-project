@@ -9,8 +9,11 @@ import com.example.Example.entities.Employee;
 import com.example.Example.mernis.HWGKPSPublicSoap;
 import com.example.Example.repository.IDepartmentRepo;
 import com.example.Example.services.IEmployeeService;
+import com.example.Example.services.IGMApproveService;
 import com.example.Example.services.ILoggerService;
 import com.example.Example.utilities.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -23,22 +26,24 @@ import java.util.concurrent.TimeUnit;
 
 @Service
 public class EmployeeManager implements IEmployeeService {
+    private static final Logger log = LoggerFactory.getLogger(EmployeeManager.class);
     private final IEmployeeRepo employeeRepo;
     private final IDepartmentRepo departmentRepo;
     private final EmailSenderManager emailSenderManager;
     private final RedisTemplate<String, Object> redisTemplate;
     private final VerificationService verificationService;
     private final ILoggerService loggerService;
+    private final IGMApproveService gmApproveService;
 
     @Autowired
-    public EmployeeManager(IEmployeeRepo employeeRepo, IDepartmentRepo departmentRepo, EmailSenderManager emailSenderManager, RedisTemplate<String, Object> redisTemplate, VerificationService verificationService, ILoggerService loggerService) {
+    public EmployeeManager(IEmployeeRepo employeeRepo, IDepartmentRepo departmentRepo, EmailSenderManager emailSenderManager, RedisTemplate<String, Object> redisTemplate, VerificationService verificationService, ILoggerService loggerService, IGMApproveService gmApproveService) {
         this.employeeRepo = employeeRepo;
         this.departmentRepo = departmentRepo;
         this.emailSenderManager = emailSenderManager;
         this.redisTemplate = redisTemplate;
         this.verificationService = verificationService;
         this.loggerService = loggerService;
-
+        this.gmApproveService = gmApproveService;
     }
 
     public EmployeeDto getDto() {
@@ -117,30 +122,48 @@ public class EmployeeManager implements IEmployeeService {
     }
 
     @Override
-    @Unique({UniqueType.EmailForUpdate,UniqueType.UserNameForUpdate})
+    @Unique({UniqueType.UserNameForUpdate, UniqueType.EmailForUpdate})
     public Result updateEmployee(EmployeeDto employeeDto, Long id) {
         Employee employee = employeeRepo.findById(id).orElse(null);
-        employee.setFirstName(employeeDto.getFirstName());
-        employee.setLastName(employeeDto.getLastName());
-        employee.setBirthOfYear(employeeDto.getBirthOfYear());
-        Department department = departmentRepo.findById(employeeDto.getDepartmentId()).orElse(null);
-        if (department == null || department.getIsDeleted() || !department.getIsActive())
-            return new Result("Lütfen geçerli bir departman giriniz");
 
-        employee.setDepartment(department);
-        if (!employee.getUserName().equals(employeeDto.getUserName())){
+        if (employee == null)
+            return new ErrorResult("Employee bulunamadı");
+
+        Department oldDepartment = employee.getDepartment();
+        Department newDepartment = departmentRepo.findById(employeeDto.getDepartmentId()).orElse(null);
+
+        if (newDepartment == null || newDepartment.getIsDeleted() || !newDepartment.getIsActive()) {
+            return new ErrorResult("Lütfen geçerli bir departman giriniz");
+        }
+
+        if (!employee.getIdentityNumber().equals(employeeDto.getIdentityNumber())) {
+            return new ErrorResult("Identity numarası eşleşmedi");
+        }
+
+        if (oldDepartment != newDepartment) {
+            gmApproveService.requestDepartmentChange(id, newDepartment.getId());
+            employee.setDepartment(oldDepartment); // Onaylanmasını bekliyor
+        }
+
+        if (!employee.getUserName().equals(employeeDto.getUserName())) {
             employee.setUserName(employeeDto.getUserName());
         }
 
-
-        if (!employee.getEmail().equals(employeeDto.getEmail()))
+        if (!employee.getEmail().equals(employeeDto.getEmail())) {
             employee.setEmail(employeeDto.getEmail());
+        }
+
+        employee.setFirstName(employeeDto.getFirstName());
+        employee.setLastName(employeeDto.getLastName());
+
         employeeRepo.save(employee);
-        employeeDto.converToDtoForUpdate(employee);
+
+        employeeDto = employeeDto.convertToDto(employee);
         loggerService.log("update", employee.getFirstName() + " " + employee.getLastName() + " çalışanı güncellendi", "Employee", employee.getId());
 
-        return new DataResult<>(true, "Employee Güncelendi", employeeDto);
+        return new DataResult<>(true, "Employee güncellendi", employeeDto);
     }
+
 
     @Override
     public Result deleteEmployee(Long id) {

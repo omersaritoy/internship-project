@@ -51,7 +51,6 @@ public class UniqueAspect {
         DepartmentDto dto;
         boolean isUnique = true;
         String errorMessage = "";
-        boolean fromUpdate = false;
         for (UniqueType type : unique.value()) {
             switch (type) {
                 case UserName:
@@ -63,13 +62,20 @@ public class UniqueAspect {
                     break;
                 case UserNameForUpdate:
                     employeeDto = (EmployeeDto) args[0];
-                    Employee employee = employeeRepo.findByUserName(employeeDto.getUserName());
-                    if (employee!=null&&employeeDto.getUserName().equals(employee.getUserName())) {
-                        break;
-                    } else if (!checkingUserName(employeeDto.getUserName())) {
+                    Employee emp = employeeRepo.findByIdentityNumber(employeeDto.getIdentityNumber());
+                    List<Employee> employees = employeeRepo.findAll();
+                    Employee existEmployee=null;
+                    for (Employee employee : employees) {
+                        if (employee.getUserName().equals(employeeDto.getUserName()) && !emp.getId().equals(employee.getId())) {
+                            existEmployee=employee;
+                            break;
+                        }
+                    }
+                    if (existEmployee != null && !existEmployee.getId().equals(employeeDto.getId())) {
                         isUnique = false;
                         errorMessage = "User name must be unique";
                     }
+
                     break;
 
                 case Email:
@@ -81,10 +87,17 @@ public class UniqueAspect {
                     break;
                 case EmailForUpdate:
                     employeeDto = (EmployeeDto) args[0];
-                    Employee emp = employeeRepo.findByEmail(employeeDto.getEmail());
-                    if (emp != null && employeeDto.getEmail().equals(emp.getEmail())) {
-                        break;
-                    } else if (!checkingEmail(employeeDto.getEmail())) {
+                    Employee empl=employeeRepo.findByIdentityNumber(employeeDto.getIdentityNumber());
+                    Employee existEmp =null;
+                    List<Employee> emps=employeeRepo.findAll();
+                    for(Employee employee : emps){
+                        if(employee.getEmail().equals(employeeDto.getEmail())&&!empl.getId().equals(employee.getId())){
+                            existEmp=employee;
+                            break;
+                        }
+                    }
+
+                    if (existEmp != null && !existEmp.getId().equals(employeeDto.getId())) {
                         isUnique = false;
                         errorMessage = "Email must be unique";
                     }

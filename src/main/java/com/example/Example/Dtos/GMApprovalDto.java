@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 @Data
 public class GMApprovalDto {
     private Long id;
-    private Employee employee;
     private Long employeeId;
     private boolean approved;
     private LocalDateTime requestTime;
     private LocalDateTime approvalTime;
+
 
     public static GMApprovalDto convertToDto(GMApproval gmApproval) {
         GMApprovalDto dto=new GMApprovalDto();
@@ -20,7 +20,7 @@ public class GMApprovalDto {
         dto.setApproved(gmApproval.isApproved());
         dto.setRequestTime(gmApproval.getRequestTime());
         dto.setApprovalTime(gmApproval.getApprovalTime());
-        dto.setEmployeeId(gmApproval.getEmployee().getId());
+        dto.setEmployeeId(gmApproval.getEmployeeId());
         return dto;
     }
     public static GMApproval convertToEntity(GMApprovalDto dto) {

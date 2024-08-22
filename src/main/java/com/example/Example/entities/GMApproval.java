@@ -15,10 +15,7 @@ public class GMApproval {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @OneToOne
     @JoinColumn(name = "employee_id")
-    private Employee employee;
-    @Transient
     private Long employeeId;
     private boolean approved;
     private LocalDateTime requestTime;

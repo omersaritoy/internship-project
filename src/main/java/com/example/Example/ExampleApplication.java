@@ -13,11 +13,7 @@ import java.net.*;
 public class ExampleApplication {
 
 	public static void main(String[] args) throws IOException {
-
-
-
 		SpringApplication.run(ExampleApplication.class, args);
-
 	}
 
 }
